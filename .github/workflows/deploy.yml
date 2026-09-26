@@ -1,0 +1,64 @@
+# Builds the site and publishes it to GitHub Pages on every push to main.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   BIRTHDAY_ENV     the full contents of your local .env (letters, name, passcode…)
+#   BIRTHDAY_PHOTOS  photo links, one per line, optional "| caption" after each
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Write .env from the BIRTHDAY_ENV secret
+        env:
+          BIRTHDAY_ENV: ${{ secrets.BIRTHDAY_ENV }}
+        run: |
+          if [ -n "$BIRTHDAY_ENV" ]; then
+            printf '%s\n' "$BIRTHDAY_ENV" > .env
+          else
+            echo "::warning::BIRTHDAY_ENV secret is empty, building with the default texts"
+          fi
+
+      - name: Build
+        run: npm run build
+        env:
+          BIRTHDAY_PHOTOS: ${{ secrets.BIRTHDAY_PHOTOS }}
+          # Pages serves project sites from /<repo>/ (a <user>.github.io repo is served from /)
+          VITE_BASE: ${{ endsWith(github.event.repository.name, '.github.io') && '/' || format('/{0}/', github.event.repository.name) }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
