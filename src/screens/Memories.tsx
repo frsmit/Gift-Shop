@@ -76,7 +76,8 @@ export default function Memories() {
         {springs.map(({ x, y, rot, scale }, i) => {
           const card = cards[i]
           return (
-            <animated.div key={i} className="absolute will-change-transform" style={{ x, y }}>
+            // first card on top, so her photos come before the sticker cards
+            <animated.div key={i} className="absolute will-change-transform" style={{ x, y, zIndex: cards.length - i }}>
               <animated.div
                 {...bind(i)}
                 className="w-[min(72vw,320px)] cursor-grab touch-none select-none active:cursor-grabbing"
