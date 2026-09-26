@@ -14,6 +14,10 @@ import { config } from '@/config'
 
 const skipCountdown = () => new URLSearchParams(window.location.search).has('preview')
 
+// Forgiving match: ignore case, spaces and separators, so "27/09" or "27-09" also unlock 2709.
+const normalize = (v: string) => v.toLowerCase().replace(/[\s/.\-_]/g, '')
+const numericCode = /^\d+$/.test(normalize(config.passcode))
+
 const remaining = () => Math.max(0, config.birthdayAt.getTime() - Date.now())
 
 export default function Gate() {
@@ -101,7 +105,7 @@ function Passcode({ onUnlock }: { onUnlock: () => void }) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (value.trim().toLowerCase() === config.passcode.toLowerCase()) {
+    if (normalize(value) === normalize(config.passcode)) {
       burst()
       onUnlock()
     } else {
@@ -127,7 +131,7 @@ function Passcode({ onUnlock }: { onUnlock: () => void }) {
               setValue(e.target.value)
               setWrong(false)
             }}
-            inputMode="text"
+            inputMode={numericCode ? 'numeric' : 'text'}
             autoComplete="off"
             placeholder="secret code"
             aria-label="Secret code"
