@@ -6,6 +6,7 @@ import { Floaty } from '@/components/beach/Floaty'
 import { Sticker } from '@/components/beach/Sticker'
 import { BackButton, OceanButton, PhotoImg, Reveal, ScreenShell, ScriptTitle } from '@/components/beach/ui'
 import { cannons } from '@/lib/celebrate'
+import { lite } from '@/lib/perf'
 import { useNav } from '@/lib/nav'
 import { config, photo } from '@/config'
 
@@ -54,7 +55,7 @@ export default function Wish() {
                 <SparklesText
                   className="font-script text-[clamp(2.4rem,9vw,4.2rem)] font-normal text-cream glow-shadow-text"
                   colors={{ first: '#ffd27a', second: '#dff6f5' }}
-                  sparklesCount={10}
+                  sparklesCount={lite ? 6 : 10}
                 >
                   Happy Birthday!
                 </SparklesText>

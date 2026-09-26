@@ -5,6 +5,7 @@ import { Sticker } from '@/components/beach/Sticker'
 import { BackButton, Polaroid, Reveal, ScreenShell, ScriptTitle } from '@/components/beach/ui'
 import { useNav } from '@/lib/nav'
 import { config, photo, photoCaption } from '@/config'
+import { lite } from '@/lib/perf'
 
 export default function Letter() {
   const { revealed } = useNav()
@@ -43,8 +44,10 @@ export default function Letter() {
                   <TextAnimate
                     key={i}
                     as="p"
-                    by="word"
-                    animation="blurInUp"
+                    // phones animate each paragraph whole (far fewer animated elements); keep it wrapping
+                    by={lite ? 'text' : 'word'}
+                    segmentClassName={lite ? 'whitespace-normal' : undefined}
+                    animation={lite ? 'slideUp' : 'blurInUp'}
                     delay={0.8 + i * 0.5}
                     duration={para.split(" ").length * 0.04}
                     once

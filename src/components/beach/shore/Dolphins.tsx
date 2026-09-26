@@ -44,10 +44,15 @@ export function Dolphins({ active = true }: { active?: boolean }) {
         gsap.set(q('.d-anchor'), { left: `${x}%`, top: `${y}%` })
         gsap.set(q('.d-flip'), { scaleX: dir })
 
+        // only visible (so its animated image only plays) while it's actually jumping
         gsap
-          .timeline({ onComplete: () => {
+          .timeline({
+            onStart: () => void gsap.set(body, { visibility: 'visible' }),
+            onComplete: () => {
+              gsap.set(body, { visibility: 'hidden' })
               if (alive) timer = setTimeout(jump, gsap.utils.random(3000, 7000))
-            }, })
+            },
+          })
           .call(() => splash('.d-splash-a', 40 * dir))
           .fromTo(body, { x: 40 * dir, rotate: 12 * dir }, { x: -40 * dir, rotate: -70 * dir, duration: 1.6, ease: 'none' }, 0)
           .fromTo(body, { yPercent: 110, y: 0 }, { yPercent: 0, y: -120, duration: 0.8, ease: 'power2.out' }, 0)
@@ -70,7 +75,7 @@ export function Dolphins({ active = true }: { active?: boolean }) {
       <div className="d-anchor absolute h-0 w-0" style={{ left: '50%', top: '50%' }}>
         {/* clip box: its bottom edge is the waterline */}
         <div className="absolute bottom-0 left-1/2 h-[260px] w-[220px] -translate-x-1/2 overflow-hidden">
-          <div className="d-body absolute bottom-0 left-1/2 -ml-[clamp(33px,8.5vw,55px)]" style={{ transform: 'translateY(110%)' }}>
+          <div className="d-body absolute bottom-0 left-1/2 -ml-[clamp(33px,8.5vw,55px)]" style={{ transform: 'translateY(110%)', visibility: 'hidden' }}>
             <div className="d-flip">
               <Sticker name="dolphin" size="clamp(66px, 17vw, 110px)" />
             </div>

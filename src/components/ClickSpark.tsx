@@ -31,6 +31,8 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparksRef = useRef<Spark[]>([]);
   const startTimeRef = useRef<number | null>(null);
+  // Only animate while there are sparks, instead of redrawing an empty canvas every frame
+  const startLoopRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -87,7 +89,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationId: number;
+    let animationId = 0;
 
     const draw = (timestamp: number) => {
       if (!startTimeRef.current) {
@@ -122,13 +124,21 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
         return true;
       });
 
-      animationId = requestAnimationFrame(draw);
+      if (sparksRef.current.length) {
+        animationId = requestAnimationFrame(draw);
+      } else {
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+        animationId = 0;
+      }
     };
 
-    animationId = requestAnimationFrame(draw);
+    startLoopRef.current = () => {
+      if (!animationId) animationId = requestAnimationFrame(draw);
+    };
 
     return () => {
       cancelAnimationFrame(animationId);
+      animationId = 0;
     };
   }, [sparkColor, sparkSize, sparkRadius, sparkCount, duration, easeFunc, extraScale]);
 
@@ -148,6 +158,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     }));
 
     sparksRef.current.push(...newSparks);
+    startLoopRef.current();
   };
 
   return (

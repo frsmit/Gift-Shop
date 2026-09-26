@@ -28,8 +28,10 @@ export function NightSea({ visible }: { visible: boolean }) {
           animate={{ y: [0, -18, 0], x: [0, i % 2 ? 8 : -8, 0] }}
           transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: j.delay }}
         >
-          <div className="opacity-85 [filter:drop-shadow(0_0_10px_#7ff6ff)_drop-shadow(0_0_24px_#3fb6ff)_saturate(1.3)]">
-            <Sticker name="jellyfish" size={j.size} />
+          <div className="relative opacity-90">
+            {/* glow: a gradient behind, far cheaper than filters on an animated sticker */}
+            <span className="absolute -inset-[60%] rounded-full bg-[radial-gradient(circle,rgba(127,246,255,0.55)_0%,rgba(63,182,255,0.25)_40%,transparent_70%)]" />
+            <Sticker name="jellyfish" size={j.size} className="relative" />
           </div>
         </motion.div>
       ))}
@@ -52,7 +54,10 @@ export function Whale({ active }: { active: boolean }) {
         gsap.set(q('.w-anchor'), { left: `${gsap.utils.random(14, 60)}%` })
         gsap
           .timeline({
+            // hidden between dives, so its animated image isn't decoding frames nobody sees
+            onStart: () => void gsap.set(q('.w-body'), { visibility: 'visible' }),
             onComplete: () => {
+              gsap.set(q('.w-body'), { visibility: 'hidden' })
               if (alive) timer = setTimeout(surface, gsap.utils.random(4000, 7000))
             },
           })
@@ -76,7 +81,7 @@ export function Whale({ active }: { active: boolean }) {
       <div className="w-anchor absolute bottom-0 left-1/3">
         {/* whale, clipped at the waterline */}
         <div className="absolute bottom-0 left-1/2 h-[clamp(50px,11.5vw,78px)] w-[clamp(56px,13vw,88px)] -translate-x-1/2 overflow-hidden">
-          <div className="w-body absolute left-0 top-0" style={{ transform: 'translateY(100%)' }}>
+          <div className="w-body absolute left-0 top-0" style={{ transform: 'translateY(100%)', visibility: 'hidden' }}>
             <Sticker name="whale" size="clamp(56px, 13vw, 88px)" />
           </div>
         </div>

@@ -17,7 +17,7 @@ const MAX_THROW = 2800
  * the distance travelled, walls at the screen edges, and a squash (React Spring) when it lands.
  * Drag and throw it (use-gesture gives the release velocity), or tap it to kick it up.
  */
-export function BeachBall({ className }: { className?: string }) {
+export function BeachBall({ className, light = 'none' }: { className?: string; light?: string }) {
   const anchor = useRef<HTMLDivElement>(null)
   const ball = useRef<HTMLDivElement>(null)
   const rotor = useRef<HTMLDivElement>(null)
@@ -148,7 +148,13 @@ export function BeachBall({ className }: { className?: string }) {
       <div ref={ball} className="relative will-change-transform">
         <animated.div style={{ scaleX: sx, scaleY: sy, transformOrigin: '50% 100%' }}>
           <div ref={rotor} className="will-change-transform">
-            <button type="button" aria-label="Beach ball" {...bind()} className="block touch-none cursor-grab active:cursor-grabbing">
+            <button
+              type="button"
+              aria-label="Beach ball"
+              {...bind()}
+              className="block touch-none cursor-grab transition-[filter] duration-[1600ms] active:cursor-grabbing"
+              style={{ filter: light }}
+            >
               <BallArt />
             </button>
           </div>
@@ -160,7 +166,7 @@ export function BeachBall({ className }: { className?: string }) {
 
 function BallArt() {
   return (
-    <svg viewBox="-22 -22 44 44" className="w-[clamp(40px,10vw,60px)] drop-shadow-[0_4px_4px_rgba(120,80,40,0.3)]">
+    <svg viewBox="-22 -22 44 44" className="w-[clamp(40px,10vw,60px)]">
       <defs>
         <clipPath id="ball-clip">
           <circle r="20" />
@@ -215,10 +221,8 @@ export function Sandcastle({ className }: { className?: string }) {
   )
 }
 
-const tailA = 'M30 78 C 22 96, 40 110, 30 128 S 20 158, 32 176'
-const tailB = 'M30 78 C 40 96, 20 110, 32 128 S 44 158, 28 176'
-
-/** A kite dancing in the sky, its tail rippling (Motion path morph). */
+/** A kite dancing in the sky. The tail is its own layer that swings from the kite
+ *  (a GPU transform), rather than a path that has to be re-drawn every frame. */
 export function Kite({ className, visible = true }: { className?: string; visible?: boolean }) {
   return (
     <motion.div
@@ -227,35 +231,30 @@ export function Kite({ className, visible = true }: { className?: string; visibl
       transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
       aria-hidden
     >
-      <svg viewBox="0 0 60 180" className="w-[clamp(30px,7vw,48px)] overflow-visible">
-        {/* string trailing off to the beach */}
-        <path d="M30 78 Q -40 180 -140 320" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="1" fill="none" />
-        <motion.path
-          initial={{ d: tailA }}
-          animate={{ d: [tailA, tailB, tailA] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          stroke="#0e3b5c"
-          strokeWidth="1.5"
-          fill="none"
-        />
-        {[
-          [30, 104, '#ff8a65'],
-          [30, 132, '#5cc8d7'],
-          [30, 160, '#ffd27a'],
-        ].map(([cx, cy, c], i) => (
-          <motion.path
-            key={i}
-            d={`M${(cx as number) - 6} ${cy} L${cx} ${(cy as number) - 4} L${(cx as number) + 6} ${cy} L${cx} ${(cy as number) + 4} Z`}
-            fill={c as string}
-            animate={{ x: [0, i % 2 ? -5 : 5, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.15 }}
-          />
-        ))}
-        <path d="M30 0 L56 34 L30 78 Z" fill="#ff8a65" />
-        <path d="M30 0 L4 34 L30 78 Z" fill="#5cc8d7" />
-        <path d="M4 34 L56 34 L30 78 Z" fill="#1b8eb0" opacity="0.35" />
-        <path d="M30 0 V78 M4 34 H56" stroke="#fff8ec" strokeWidth="1.5" />
-      </svg>
+      <div className="relative w-[clamp(30px,7vw,48px)]">
+        {/* tail + bows, swinging from the bottom tip of the kite */}
+        <svg
+          viewBox="0 0 60 110"
+          className="absolute left-0 top-[96%] w-full origin-top overflow-visible animate-[tail-swing_1.6s_ease-in-out_infinite]"
+        >
+          <path d="M30 0 C 22 18, 40 32, 30 50 S 20 80, 32 98" stroke="#0e3b5c" strokeWidth="1.5" fill="none" />
+          {[
+            [30, 26, '#ff8a65'],
+            [30, 54, '#5cc8d7'],
+            [31, 82, '#ffd27a'],
+          ].map(([cx, cy, c], i) => (
+            <path key={i} d={`M${(cx as number) - 6} ${cy} L${cx} ${(cy as number) - 4} L${(cx as number) + 6} ${cy} L${cx} ${(cy as number) + 4} Z`} fill={c as string} />
+          ))}
+        </svg>
+        <svg viewBox="0 0 60 80" className="relative w-full overflow-visible">
+          {/* string trailing off to the beach */}
+          <path d="M30 78 Q -40 180 -140 320" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="1" fill="none" />
+          <path d="M30 0 L56 34 L30 78 Z" fill="#ff8a65" />
+          <path d="M30 0 L4 34 L30 78 Z" fill="#5cc8d7" />
+          <path d="M4 34 L56 34 L30 78 Z" fill="#1b8eb0" opacity="0.35" />
+          <path d="M30 0 V78 M4 34 H56" stroke="#fff8ec" strokeWidth="1.5" />
+        </svg>
+      </div>
     </motion.div>
   )
 }

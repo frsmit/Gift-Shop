@@ -1,3 +1,4 @@
+import { lite } from '@/lib/perf'
 import { cn } from '@/lib/utils'
 
 // Animated Noto Emoji stickers (CC BY 4.0, Google) resized by scripts/stickers.mjs
@@ -36,7 +37,8 @@ export function Sticker({
       draggable={false}
       loading={eager ? 'eager' : 'lazy'}
       decoding="async"
-      className={cn('pointer-events-none select-none drop-shadow-[0_6px_10px_rgba(14,59,92,0.25)]', className)}
+      // a filter shadow on an animated image is re-rendered every frame, so phones skip it
+      className={cn('pointer-events-none select-none', !lite && 'drop-shadow-[0_6px_10px_rgba(14,59,92,0.25)]', className)}
       style={{ width: size, height: size }}
     />
   )

@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import SplitText from '@/components/SplitText'
 import { RippleButton, RippleButtonRipples } from '@/components/animate-ui/components/buttons/ripple'
 import { useNav, type Screen } from '@/lib/nav'
+import { lite } from '@/lib/perf'
 import { cn } from '@/lib/utils'
 import { placeholder } from '@/config'
 
@@ -33,8 +34,9 @@ export function ScriptTitle({
       duration={1.1}
       ease="back.out(1.6)"
       splitType="chars"
-      from={{ opacity: 0, y: 40, rotate: -8, filter: 'blur(6px)' }}
-      to={{ opacity: 1, y: 0, rotate: 0, filter: 'blur(0px)' }}
+      // animating blur per letter is expensive on phones; they get the same motion without it
+      from={lite ? { opacity: 0, y: 40, rotate: -8 } : { opacity: 0, y: 40, rotate: -8, filter: 'blur(6px)' }}
+      to={lite ? { opacity: 1, y: 0, rotate: 0 } : { opacity: 1, y: 0, rotate: 0, filter: 'blur(0px)' }}
       threshold={0}
       rootMargin="0px"
     />
@@ -57,8 +59,8 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 28, filter: 'blur(8px)' }}
-      animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : undefined}
+      initial={lite ? { opacity: 0, y: 28 } : { opacity: 0, y: 28, filter: 'blur(8px)' }}
+      animate={revealed ? (lite ? { opacity: 1, y: 0 } : { opacity: 1, y: 0, filter: 'blur(0px)' }) : undefined}
       transition={{ duration: 0.9, delay: base + i * 0.15, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}

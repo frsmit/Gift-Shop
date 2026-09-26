@@ -162,7 +162,8 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <NavContext.Provider value={nav}>
         <ClickSpark sparkColor="#fff8ec" sparkSize={9} sparkRadius={18} sparkCount={9} duration={450}>
-          <Scene time={timeOf[screen]} />
+          {/* the beach draws its own sky and sea, so skip the shared scene there */}
+          {screen !== 'bottles' && <Scene time={timeOf[screen]} />}
 
           <main
             key={screen}

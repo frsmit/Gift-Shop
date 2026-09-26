@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { lite } from '@/lib/perf'
+import { cn } from '@/lib/utils'
 
 // Tap to blow out the candles: GSAP puffs each flame out and sends smoke curling up.
 export function Cake({ onBlown }: { onBlown: () => void }) {
@@ -27,7 +29,7 @@ export function Cake({ onBlown }: { onBlown: () => void }) {
 
   return (
     <button ref={ref} type="button" onClick={blow} aria-label="Blow out the candles" className="relative outline-none">
-      <svg viewBox="0 0 200 190" className="w-[clamp(170px,46vw,260px)] overflow-visible drop-shadow-[0_18px_24px_rgba(30,20,60,0.45)]">
+      <svg viewBox="0 0 200 190" className={cn('w-[clamp(170px,46vw,260px)] overflow-visible', !lite && 'drop-shadow-[0_18px_24px_rgba(30,20,60,0.45)]')}>
         <defs>
           <radialGradient id="flame" cx="50%" cy="70%" r="60%">
             <stop offset="0" stopColor="#fffbe6" />

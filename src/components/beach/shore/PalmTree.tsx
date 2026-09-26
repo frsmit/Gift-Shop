@@ -1,31 +1,39 @@
 import { cn } from '@/lib/utils'
+import type { BeachMode } from '@/lib/nav'
+
+// Colours per time of day (cheaper than a CSS filter over the swaying fronds)
+const palettes: Record<BeachMode, { trunk: string; shade: string; ring: string; leafA: string; leafB: string; rib: string; nutA: string; nutB: string }> = {
+  day: { trunk: '#a8743f', shade: '#8a5a2e', ring: '#7a4e27', leafA: '#3bb57d', leafB: '#2c9a69', rib: '#1f7a52', nutA: '#6e4524', nutB: '#7d5130' },
+  evening: { trunk: '#8e5a3a', shade: '#6f4228', ring: '#5e3620', leafA: '#6a9a55', leafB: '#57854a', rib: '#3d6a3a', nutA: '#5a3520', nutB: '#664028' },
+  night: { trunk: '#2c2b40', shade: '#232236', ring: '#1b1a2c', leafA: '#1f3a3c', leafB: '#193234', rib: '#122628', nutA: '#1d1a28', nutB: '#221f2e' },
+}
 
 const CROWN = { x: 150, y: 96 }
 // Frond angles in degrees (0 = pointing right, -90 = up). Side fronds droop.
 const FRONDS = [-172, -140, -108, -78, -48, -16, 14, 168, 196]
 
-export function PalmTree({ className, flip = false, speed = 5 }: { className?: string; flip?: boolean; speed?: number }) {
+// Two stacked SVGs: a still trunk, and the fronds as their own layer that sways as a whole
+// (a transform on the <svg> element, which the GPU can animate without repainting).
+export function PalmTree({ className, flip = false, speed = 5, mode = 'day' }: { className?: string; flip?: boolean; speed?: number; mode?: BeachMode }) {
+  const c = palettes[mode]
+  const svgCls = 'absolute inset-0 h-full w-full overflow-visible [&_*]:transition-[fill,stroke] [&_*]:duration-[1600ms]'
   return (
-    <svg
-      viewBox="0 0 260 420"
-      className={cn('pointer-events-none overflow-visible drop-shadow-[0_10px_14px_rgba(14,59,92,0.25)]', flip && '-scale-x-100', className)}
-      aria-hidden
-    >
-      {/* trunk */}
-      <path d="M104 420 C 110 320, 126 200, 142 98 L 160 102 C 148 204, 136 322, 134 420 Z" fill="#a8743f" />
-      <path d="M118 420 C 122 320, 134 210, 148 100 L 156 101 C 144 210, 134 320, 130 420 Z" fill="#8a5a2e" opacity="0.5" />
-      {Array.from({ length: 14 }, (_, i) => {
-        const t = i / 14
-        const y = 410 - t * 300
-        const x = 118 + t * 32
-        return <path key={i} d={`M${x - 12} ${y} q 13 -7 26 0`} stroke="#7a4e27" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      })}
-
-      {/* fronds sway from the crown */}
-      <g
+    <div className={cn('pointer-events-none aspect-[260/420]', flip && '-scale-x-100', className)} aria-hidden>
+      <svg viewBox="0 0 260 420" className={svgCls}>
+        <path d="M104 420 C 110 320, 126 200, 142 98 L 160 102 C 148 204, 136 322, 134 420 Z" fill={c.trunk} />
+        <path d="M118 420 C 122 320, 134 210, 148 100 L 156 101 C 144 210, 134 320, 130 420 Z" fill={c.shade} opacity="0.5" />
+        {Array.from({ length: 14 }, (_, i) => {
+          const t = i / 14
+          const y = 410 - t * 300
+          const x = 118 + t * 32
+          return <path key={i} d={`M${x - 12} ${y} q 13 -7 26 0`} stroke={c.ring} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        })}
+      </svg>
+      <svg
+        viewBox="0 0 260 420"
+        className={svgCls}
         style={{
-          transformOrigin: `${CROWN.x}px ${CROWN.y}px`,
-          transformBox: 'view-box',
+          transformOrigin: `${(CROWN.x / 260) * 100}% ${(CROWN.y / 420) * 100}%`,
           animation: `sway ${speed}s ease-in-out infinite`,
         }}
       >
@@ -35,18 +43,18 @@ export function PalmTree({ className, flip = false, speed = 5 }: { className?: s
             <g key={a} transform={`translate(${CROWN.x} ${CROWN.y}) rotate(${a})${pointsLeft ? ' scale(1 -1)' : ''}`}>
               <path
                 d="M0 0 C 34 -26, 86 -26, 128 16 C 118 12, 108 14, 100 20 C 94 10, 82 10, 74 18 C 68 8, 54 8, 46 14 C 40 6, 26 6, 0 0 Z"
-                fill={i % 2 ? '#3bb57d' : '#2c9a69'}
+                fill={i % 2 ? c.leafA : c.leafB}
               />
-              <path d="M0 0 C 40 -20, 88 -18, 126 14" stroke="#1f7a52" strokeWidth="2" fill="none" />
+              <path d="M0 0 C 40 -20, 88 -18, 126 14" stroke={c.rib} strokeWidth="2" fill="none" />
             </g>
           )
         })}
         {/* coconuts */}
-        <circle cx="144" cy="104" r="8" fill="#6e4524" />
-        <circle cx="158" cy="106" r="8" fill="#7d5130" />
-        <circle cx="151" cy="115" r="7.5" fill="#6e4524" />
-      </g>
-    </svg>
+        <circle cx="144" cy="104" r="8" fill={c.nutA} />
+        <circle cx="158" cy="106" r="8" fill={c.nutB} />
+        <circle cx="151" cy="115" r="7.5" fill={c.nutA} />
+      </svg>
+    </div>
   )
 }
 

@@ -8,6 +8,7 @@ import { Floaty } from '@/components/beach/Floaty'
 import { Sticker } from '@/components/beach/Sticker'
 import { OceanButton, Reveal, ScreenShell, ScriptTitle } from '@/components/beach/ui'
 import { burst } from '@/lib/celebrate'
+import { lite } from '@/lib/perf'
 import { useNav } from '@/lib/nav'
 import { config } from '@/config'
 
@@ -49,6 +50,7 @@ export default function Landing() {
           speed="slow"
           waveY={0.62}
           waveCount={4}
+          lowPower={lite}
         />
       </div>
 
@@ -75,7 +77,7 @@ export default function Landing() {
             <SparklesText
               className="font-script text-[clamp(3.8rem,17vw,8.5rem)] font-normal leading-tight text-sea"
               colors={{ first: '#5cc8d7', second: '#ffc49b' }}
-              sparklesCount={8}
+              sparklesCount={lite ? 5 : 8}
             >
               {config.name}
             </SparklesText>
@@ -87,6 +89,7 @@ export default function Landing() {
               delay={90}
               animateBy="words"
               direction="bottom"
+              {...(lite ? { animationFrom: { opacity: 0, y: 30 }, animationTo: [{ opacity: 1, y: 0 }] } : {})}
               className="mt-2 max-w-xl justify-center px-2 font-hand text-[clamp(1.25rem,4.8vw,1.9rem)] tracking-wide text-ocean/90"
             />
           )}

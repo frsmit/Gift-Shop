@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { Cloud, Gull } from '../Scene'
+import { Twinkles } from '../Twinkles'
+import { lite } from '@/lib/perf'
 import type { BeachMode } from '@/lib/nav'
 import { cn } from '@/lib/utils'
 
@@ -21,7 +23,7 @@ const bodies: Record<BeachMode, { top: string; color: string; glow: string; scal
   night: { top: 'top-[18%]', color: '#f2f0e3', glow: 'rgba(190,210,255,0.45)', scale: 0.85 },
 }
 
-const STARS = Array.from({ length: 60 }, (_, i) => ({
+const STARS = Array.from({ length: lite ? 40 : 60 }, (_, i) => ({
   left: (i * 37 + (i % 7) * 11) % 100,
   top: (i * 53 + (i % 5) * 7) % 100,
   size: i % 9 === 0 ? 3 : i % 3 === 0 ? 2 : 1.5,
@@ -45,13 +47,13 @@ export function BeachSky({ mode, onToggle }: { mode: BeachMode; onToggle: () => 
       <div className="absolute inset-x-0 top-0 h-[max(31%,15.5rem)] overflow-hidden md:h-[max(34%,15rem)]">
         {/* stars */}
         <motion.div className="absolute inset-0" initial={false} animate={{ opacity: mode === 'night' ? 1 : mode === 'evening' ? 0.3 : 0 }} transition={t}>
-          {STARS.map((s, i) => (
-            <span
-              key={i}
-              className="absolute rounded-full bg-white animate-[twinkle_3s_ease-in-out_infinite]"
-              style={{ left: `${s.left}%`, top: `${s.top * 0.85}%`, width: s.size, height: s.size, animationDelay: `${s.delay}s` }}
+          {mode !== 'day' && (
+            <Twinkles
+              count={STARS.length}
+              dotClassName="bg-white"
+              place={(i) => ({ left: `${STARS[i].left}%`, top: `${STARS[i].top * 0.85}%`, width: STARS[i].size, height: STARS[i].size })}
             />
-          ))}
+          )}
         </motion.div>
 
         {/* shooting stars at night */}

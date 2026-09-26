@@ -15,6 +15,7 @@ export const WavyBackground = ({
   waveOpacity = 0.5,
   waveY = 0.5,
   waveCount = 5,
+  lowPower = false,
   ...props
 }: {
   children?: any;
@@ -29,6 +30,8 @@ export const WavyBackground = ({
   /** vertical position of the waves, 0 (top) → 1 (bottom) */
   waveY?: number;
   waveCount?: number;
+  /** phones: draw at 1/3 resolution (the browser's upscaling softens it, so no blur filter), 30fps */
+  lowPower?: boolean;
   [key: string]: any;
 }) => {
   const noise = createNoise3D();
@@ -51,18 +54,19 @@ export const WavyBackground = ({
     }
   };
 
+  // In low-power mode the canvas holds fewer pixels and is stretched to full size by CSS.
+  const scale = lowPower ? 1 / 3 : 1;
+  const setup = () => {
+    w = ctx.canvas.width = Math.ceil(window.innerWidth * scale);
+    h = ctx.canvas.height = Math.ceil(window.innerHeight * scale);
+    ctx.filter = lowPower ? "none" : `blur(${blur}px)`;
+  };
   const init = () => {
     canvas = canvasRef.current;
     ctx = canvas.getContext("2d");
-    w = ctx.canvas.width = window.innerWidth;
-    h = ctx.canvas.height = window.innerHeight;
-    ctx.filter = `blur(${blur}px)`;
+    setup();
     nt = 0;
-    onResize = function () {
-      w = ctx.canvas.width = window.innerWidth;
-      h = ctx.canvas.height = window.innerHeight;
-      ctx.filter = `blur(${blur}px)`;
-    };
+    onResize = setup;
     window.addEventListener("resize", onResize);
     render();
   };
@@ -78,11 +82,12 @@ export const WavyBackground = ({
     nt += getSpeed();
     for (i = 0; i < n; i++) {
       ctx.beginPath();
-      ctx.lineWidth = waveWidth || 50;
+      ctx.lineWidth = (waveWidth || 50) * scale;
       ctx.strokeStyle = waveColors[i % waveColors.length];
-      for (x = 0; x < w; x += 5) {
+      // x / y are computed in full-size pixels, then drawn at the canvas scale
+      for (x = 0; x < w / scale; x += lowPower ? 10 : 5) {
         var y = noise(x / 800, 0.3 * i, nt) * 100;
-        ctx.lineTo(x, y + h * waveY);
+        ctx.lineTo(x * scale, y * scale + h * waveY);
       }
       ctx.stroke();
       ctx.closePath();
@@ -91,7 +96,13 @@ export const WavyBackground = ({
 
   let animationId: number;
   let onResize: () => void = () => {};
-  const render = () => {
+  let lastFrame = 0;
+  const render = (now = 0) => {
+    animationId = requestAnimationFrame(render);
+    if (lowPower) {
+      if (now - lastFrame < 33) return; // ~30fps is plenty for slow waves
+      lastFrame = now;
+    }
     if (backgroundFill === "transparent") {
       ctx.clearRect(0, 0, w, h);
     } else {
@@ -101,7 +112,6 @@ export const WavyBackground = ({
     }
     ctx.globalAlpha = waveOpacity || 0.5;
     drawWave(waveCount);
-    animationId = requestAnimationFrame(render);
   };
 
   useEffect(() => {
@@ -130,11 +140,11 @@ export const WavyBackground = ({
       )}
     >
       <canvas
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 h-full w-full"
         ref={canvasRef}
         id="canvas"
         style={{
-          ...(isSafari ? { filter: `blur(${blur}px)` } : {}),
+          ...(isSafari && !lowPower ? { filter: `blur(${blur}px)` } : {}),
         }}
       ></canvas>
       <div className={cn("relative z-10", className)} {...props}>

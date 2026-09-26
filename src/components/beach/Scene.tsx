@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import type { TimeOfDay } from '@/lib/nav'
 import { SunGlitter } from './shore/SunGlitter'
+import { Twinkles } from './Twinkles'
 
 type Palette = {
   sky: [string, string, string]
@@ -97,17 +98,9 @@ export function Scene({ time }: { time: TimeOfDay }) {
 
       {/* Stars (dawn / sunset) */}
       <motion.div className="absolute inset-x-0 top-0 h-1/2" initial={false} animate={{ opacity: p.stars }} transition={t}>
-        {Array.from({ length: 28 }, (_, i) => (
-          <span
-            key={i}
-            className="absolute size-[2px] rounded-full bg-white animate-[twinkle_3s_ease-in-out_infinite]"
-            style={{
-              left: `${(i * 37) % 100}%`,
-              top: `${(i * 53) % 90}%`,
-              animationDelay: `${(i % 7) * 0.4}s`,
-            }}
-          />
-        ))}
+        {p.stars > 0 && (
+          <Twinkles count={28} dotClassName="size-[2px] bg-white" place={(i) => ({ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 90}%` })} />
+        )}
       </motion.div>
 
       {/* Sun */}

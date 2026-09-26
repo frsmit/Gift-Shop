@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { Twinkles } from '../Twinkles'
 
 // px. The SVG is three periods wide and slides left by exactly one period for a seamless
 // loop, so even a 2880px-wide screen never sees its right edge.
@@ -120,13 +121,13 @@ export function ShoreGlow({ visible }: { visible: boolean }) {
         <div className="absolute inset-0 animate-[shore-x_48s_linear_infinite]">{glowLine(42, 0, 4, 0.9)}</div>
       </div>
       {/* sparkling plankton */}
-      {Array.from({ length: 26 }, (_, i) => (
-        <span
-          key={i}
-          className="absolute size-1 rounded-full bg-[#aefcff] shadow-[0_0_6px_2px_#52e8ff] animate-[twinkle_1.8s_ease-in-out_infinite]"
-          style={{ left: `${(i * 37) % 100}%`, top: `${30 + ((i * 23) % 40)}px`, animationDelay: `${(i % 9) * 0.2}s` }}
-        />
-      ))}
+      <Twinkles
+        count={26}
+        layers={2}
+        duration={1.8}
+        dotClassName="size-1 bg-[#aefcff] shadow-[0_0_6px_2px_#52e8ff]"
+        place={(i) => ({ left: `${(i * 37) % 100}%`, top: `${30 + ((i * 23) % 40)}px` })}
+      />
     </div>
   )
 }

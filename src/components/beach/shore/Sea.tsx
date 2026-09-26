@@ -1,4 +1,5 @@
 import { SunGlitter } from './SunGlitter'
+import { Twinkles } from '../Twinkles'
 import type { BeachMode } from '@/lib/nav'
 
 // Tropical water: turquoise near the horizon, deep blue in the middle, clear shallows by the shore.
@@ -45,13 +46,7 @@ export function Sea({ mode = 'day' }: { mode?: BeachMode }) {
         ))}
 
         {/* glints */}
-        {Array.from({ length: 18 }, (_, i) => (
-          <span
-            key={i}
-            className="absolute size-1 rounded-full bg-white animate-[twinkle_2.6s_ease-in-out_infinite]"
-            style={{ left: `${(i * 41) % 100}%`, top: `${8 + ((i * 29) % 85)}%`, animationDelay: `${(i % 6) * 0.45}s` }}
-          />
-        ))}
+        <Twinkles count={18} layers={2} duration={2.6} dotClassName="size-1 bg-white" place={(i) => ({ left: `${(i * 41) % 100}%`, top: `${8 + ((i * 29) % 85)}%` })} />
       </div>
 
       {/* sailboat drifting along the horizon (it sits above the light tint, so it's shaded here; home by night) */}

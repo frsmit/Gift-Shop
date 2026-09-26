@@ -16,6 +16,7 @@ import { Shells } from '@/components/beach/shore/Shells'
 import { ShoreGlow } from '@/components/beach/shore/Shoreline'
 import { cannons } from '@/lib/celebrate'
 import { bottleScreens, nextBeachMode, useNav, type BeachMode, type BottleScreen } from '@/lib/nav'
+import { lite } from '@/lib/perf'
 import { cn } from '@/lib/utils'
 import { config } from '@/config'
 
@@ -29,12 +30,13 @@ const spots = [
   'left-[71%] top-[68%] md:left-[85%] md:top-[30%] md:scale-[0.86]',
 ]
 
-// Everything below the horizon gets tinted by the light (multiply blend): warm at
-// evening, deep blue at night. Glowing things (moon, jellyfish, plankton) sit above it.
+// Everything below the horizon gets tinted by the light: warm at evening, deep blue at
+// night. Glowing things (moon, jellyfish, plankton) sit above it. A plain translucent
+// layer, not a blend mode, because blend modes are expensive to composite on phones.
 const shade: Record<BeachMode, { backgroundColor: string; opacity: number }> = {
-  day: { backgroundColor: '#ffffff', opacity: 0 },
-  evening: { backgroundColor: '#ff9f7a', opacity: 0.42 },
-  night: { backgroundColor: '#1a2758', opacity: 0.82 },
+  day: { backgroundColor: '#ff9f7a', opacity: 0 },
+  evening: { backgroundColor: '#d8613f', opacity: 0.3 },
+  night: { backgroundColor: '#0a1438', opacity: 0.72 },
 }
 
 // Bottles sit above the tint (so their labels stay readable) and get a lighter touch.
@@ -42,13 +44,6 @@ const bottleLight: Record<BeachMode, string> = {
   day: 'none',
   evening: 'sepia(0.25) saturate(1.15) brightness(0.95)',
   night: 'brightness(0.72) saturate(0.7)',
-}
-
-// Palms sit above the glowing night waves, so they're shaded here instead of by the tint.
-const palmLight: Record<BeachMode, string> = {
-  day: 'none',
-  evening: 'sepia(0.35) saturate(1.3) brightness(0.85) hue-rotate(-10deg)',
-  night: 'brightness(0.32) saturate(0.5)',
 }
 
 // The ball can fly up into the sky (outside the tint), so it carries its own lighting.
@@ -94,13 +89,26 @@ export default function Bottles() {
     <div className="relative h-dvh min-h-[600px] w-full overflow-hidden">
       {/* ── Sky: tap the sun / moon to change the time of day ── */}
       <BeachSky mode={mode} onToggle={cycle} />
-      <Kite className="left-[9%] top-[20%] z-[2] md:left-[17%] md:top-[19%]" visible={mode === 'day'} />
+      <AnimatePresence>
+        {mode === 'day' && (
+          <motion.div
+            key="kite"
+            className="pointer-events-none absolute inset-0 z-[2]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2 }}
+          >
+            <Kite className="left-[9%] top-[20%] md:left-[17%] md:top-[19%]" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Sea ── */}
       <div className={SEA_BOX}>
         <Sea mode={mode} />
         <Whale active={mode !== 'night'} />
-        <Turtle className="top-[72%] z-[1]" visible={mode !== 'night'} />
+        {mode !== 'night' && <Turtle className="top-[72%] z-[1]" />}
         <Dolphins active={mode !== 'night'} />
 
         {bottleScreens.map((s, i) => (
@@ -137,30 +145,44 @@ export default function Bottles() {
       </div>
 
       {/* ── Beach ball: lit by the time of day wherever it flies ── */}
-      <div className={cn(SAND_BOX, 'z-[13] pointer-events-none transition-[filter] duration-[1600ms]')} style={{ filter: ballLight[mode] }}>
-        <BeachBall className="pointer-events-auto left-[24%] top-[36%] md:left-[30%] md:top-[34%]" />
+      <div className={cn(SAND_BOX, 'z-[13] pointer-events-none')}>
+        <BeachBall light={ballLight[mode]} className="pointer-events-auto left-[24%] top-[36%] md:left-[30%] md:top-[34%]" />
       </div>
 
       {/* ── Light tint below the horizon ── */}
       <motion.div
-        className={cn(SEA_BOX, 'bottom-0 z-[12] mix-blend-multiply pointer-events-none')}
+        className={cn(SEA_BOX, 'bottom-0 z-[12] pointer-events-none')}
         initial={false}
         animate={shade[mode]}
         transition={{ duration: 1.8, ease: [0.45, 0, 0.2, 1] }}
       />
 
       {/* ── Night glow: moonlight, jellyfish, glowing waves ── */}
-      <div className={cn(SEA_BOX, 'z-[13] pointer-events-none')}>
-        <NightSea visible={mode === 'night'} />
-      </div>
-      <div className={cn(SAND_BOX, 'z-[13] pointer-events-none')}>
-        <ShoreGlow visible={mode === 'night'} />
-      </div>
+      <AnimatePresence>
+        {mode === 'night' && (
+          <motion.div
+            key="night-glow"
+            // its own layer above the tint (z-13), below the palms that follow it
+            className="pointer-events-none absolute inset-0 z-[13]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.6 }}
+          >
+            <div className={SEA_BOX}>
+              <NightSea visible />
+            </div>
+            <div className={SAND_BOX}>
+              <ShoreGlow visible />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Palms: planted in the sand, leaning out over the water (in front of the waves) ── */}
-      <div className={cn(SAND_BOX, 'z-[13] pointer-events-none transition-[filter] duration-[1600ms]')} style={{ filter: palmLight[mode] }}>
-        <PalmTree className="absolute bottom-[40%] left-[-13vw] h-[clamp(200px,31vh,500px)] sm:left-[-3vw] md:left-[2vw]" speed={5.5} />
-        <PalmTree flip className="absolute bottom-[52%] right-[-15vw] h-[clamp(180px,27vh,420px)] sm:right-[-2vw] md:right-[3vw]" speed={6.5} />
+      <div className={cn(SAND_BOX, 'z-[13] pointer-events-none')}>
+        <PalmTree mode={mode} className="absolute bottom-[40%] left-[-13vw] h-[clamp(200px,31vh,500px)] sm:left-[-3vw] md:left-[2vw]" speed={5.5} />
+        <PalmTree mode={mode} flip className="absolute bottom-[52%] right-[-15vw] h-[clamp(180px,27vh,420px)] sm:right-[-2vw] md:right-[3vw]" speed={6.5} />
       </div>
 
       {/* ── Things she can tap on the sand ── */}
@@ -187,7 +209,7 @@ export default function Bottles() {
         <Reveal i={1}>
           {revealed && (
             <TextAnimate
-              animation="blurInUp"
+              animation={lite ? 'slideUp' : 'blurInUp'}
               by="word"
               once
               className={cn('font-hand text-[clamp(1.05rem,4vw,1.5rem)] transition-colors duration-[1600ms]', dark ? 'text-cream/90' : 'text-ocean/85')}
